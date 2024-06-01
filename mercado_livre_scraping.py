@@ -26,6 +26,7 @@ def get_items_title(soup):
     else:
         return []
 
+# TODO: Refactor this function considering the price format 
 def get_items_price(soup):
     """Extract and return the prices of promotion items from the BeautifulSoup object."""
     if soup:
