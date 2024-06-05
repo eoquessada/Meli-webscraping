@@ -26,12 +26,17 @@ def get_items_title(soup):
     else:
         return []
 
-# TODO: Refactor this function considering the price format 
 def get_items_price(soup):
     """Extract and return the prices of promotion items from the BeautifulSoup object."""
     if soup:
+        prices = []
         html_tags = soup.find_all('span', class_='promotion-item__installments')
-        return [tag.get_text(strip=True) for tag in html_tags]
+        for tag in html_tags:
+            main_price = tag.contents[0].strip()
+            centavos = tag.find('sup').get_text(strip=True)
+            full_price = f"{main_price}.{centavos}"
+            prices.append(full_price)
+        return prices
     else:
         return []
     
