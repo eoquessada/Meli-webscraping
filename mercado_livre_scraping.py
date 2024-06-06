@@ -27,6 +27,12 @@ def get_items_title(soup):
     else:
         return []
 
+def get_items_prices(soup):
+    """Extract and return the prices of promotion items from the BeautifulSoup object."""
+    if soup:
+        html_tags = soup.find_all('span', class_='andes-money-amount andes-money-amount--cents-superscript')
+        return [tag['aria-label'] for tag in html_tags]
+
 def scrap_all_pages(base_url, max_pages, column_name):
     """Scrap all pages from offer products"""
     products = []
