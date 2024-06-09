@@ -5,6 +5,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import re
+import os
+from pathlib import Path
 
 def get_response_text(url):
     """Fetch the content of the given URL and return the response text."""
@@ -109,8 +111,16 @@ def send_email(email_from, email_to, dataframe, email_password):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+def dataframe_to_csv(dataframe):
+    user_home = Path.home()
+    downloads_folder = user_home/"Downloads"
+    file_path = downloads_folder/"meli_offers_dataframe.csv"
+    dataframe.to_csv(file_path, index = None, header=True) 
+    return None
+
 
 url = 'https://www.mercadolivre.com.br/ofertas?container_id=MLB779362-1&page='
 max_pages = 20
 offers = scrap_all_pages(url, max_pages, ['Product', 'Price', 'Discount'])
+dataframe_to_csv(offers)
 print(offers)
