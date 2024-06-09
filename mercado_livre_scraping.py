@@ -39,6 +39,14 @@ def get_items_prices(soup):
     else:
         return []
 
+def get_items_discounts(soup):
+    """"Extract and return the discount of promotion items from the BeatifulSoup object."""
+    if soup:
+        html_tags = soup.find_all('span', class_ = 'promotion-item__discount-text')
+        return [tag.get_text(strip=True) for tag in html_tags]
+    else:
+        return []
+
 def transform_price(text):
     """Transform price strings to correct format"""
     text_w_cents = r'Ahora: (\d+) reales con (\d+) centavos'  
@@ -61,20 +69,23 @@ def scrap_all_pages(base_url, max_pages, column_names):
     """Scrap all pages from offer products"""
     all_products_titles = []
     all_products_prices = []
+    all_products_discounts = []
     for i in range(max_pages):
         page_url = f"{base_url}{i+1}"
         response_text = get_response_text(page_url)
         soup = beautify_text(response_text)
         titles = get_items_title(soup)
         prices = get_items_prices(soup)
+        discounts = get_items_discounts(soup)
         if titles:
             all_products_titles.extend(titles)
             all_products_prices.extend(prices)
+            all_products_discounts.extend(discounts)
         else:
             break  
     for i in range(len(all_products_prices)):
         all_products_prices[i] = transform_price(all_products_prices[i])
-    all_products = zip(all_products_titles, all_products_prices)
+    all_products = zip(all_products_titles, all_products_prices, all_products_discounts)
     return pd.DataFrame(all_products, columns=column_names)
 
 # TODO: Refactor func send_email (email_password should not be passed as an argument of send_email)
@@ -101,5 +112,5 @@ def send_email(email_from, email_to, dataframe, email_password):
 
 url = 'https://www.mercadolivre.com.br/ofertas?container_id=MLB779362-1&page='
 max_pages = 20
-offers = scrap_all_pages(url, max_pages, ['products', 'prices'])
+offers = scrap_all_pages(url, max_pages, ['Product', 'Price', 'Discount'])
 print(offers)
