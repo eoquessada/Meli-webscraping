@@ -4,6 +4,7 @@ import pandas as pd
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import re
 
 def get_response_text(url):
     """Fetch the content of the given URL and return the response text."""
@@ -38,7 +39,24 @@ def get_items_prices(soup):
     else:
         return []
 
-# TODO: Tranfsorm price data (create a func)
+def transform_price(text):
+    """Transform price strings to correct format"""
+    text_w_cents = r'Ahora: (\d+) reales con (\d+) centavos'  
+    text_no_cents = r'Ahora: (\d+) reales'  
+    
+    has_cents = re.search(text_w_cents, text)
+    no_cents = re.search(text_no_cents, text)
+    
+    if has_cents:
+        reais = has_cents.group(1)
+        centavos = has_cents.group(2)
+        return f'R${reais},{centavos.zfill(2)}'
+    elif no_cents:
+        reais = no_cents.group(1)
+        return f'R${reais},00'
+    else:
+        return None
+
 def scrap_all_pages(base_url, max_pages, column_names):
     """Scrap all pages from offer products"""
     all_products_titles = []
@@ -54,6 +72,8 @@ def scrap_all_pages(base_url, max_pages, column_names):
             all_products_prices.extend(prices)
         else:
             break  
+    for i in range(len(all_products_prices)):
+        all_products_prices[i] = transform_price(all_products_prices[i])
     all_products = zip(all_products_titles, all_products_prices)
     return pd.DataFrame(all_products, columns=column_names)
 
@@ -82,5 +102,4 @@ def send_email(email_from, email_to, dataframe, email_password):
 url = 'https://www.mercadolivre.com.br/ofertas?container_id=MLB779362-1&page='
 max_pages = 20
 offers = scrap_all_pages(url, max_pages, ['products', 'prices'])
-send_email('joaoquessada4@gmail.com', 'joaoquessada4@gmail.com', offers, 'mysecretpassword')
 print(offers)
