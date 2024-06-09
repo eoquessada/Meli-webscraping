@@ -1,11 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import re
-import os
 from pathlib import Path
 
 def get_response_text(url):
@@ -90,28 +86,8 @@ def scrap_all_pages(base_url, max_pages, column_names):
     all_products = zip(all_products_titles, all_products_prices, all_products_discounts)
     return pd.DataFrame(all_products, columns=column_names)
 
-# TODO: Refactor func send_email (email_password should not be passed as an argument of send_email)
-def send_email(email_from, email_to, dataframe, email_password):
-    msg = MIMEMultipart()
-    msg['From'] = email_from
-    msg['To'] = email_to
-    msg['Subject'] = "Novas Ofertas Mercado Livre!"
-
-    body = f"<p>Novas Ofertas do Mercado Livre para você!</p><p>{dataframe.to_html()}</p>"
-    msg.attach(MIMEText(body, 'html'))
-
-    try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        # Use your App Password instead of your regular password
-        server.login(email_from, email_password)
-        server.sendmail(msg['From'], [msg['To']], msg.as_string())
-        server.quit()
-        print("Email sent successfully!")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-
 def dataframe_to_csv(dataframe):
+    """Convert dataframe to csv and export do Downloads folder"""
     user_home = Path.home()
     downloads_folder = user_home/"Downloads"
     file_path = downloads_folder/"meli_offers_dataframe.csv"
