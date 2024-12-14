@@ -61,25 +61,6 @@ def get_items_discounts(soup):
         return []
 
 
-###def transform_price(text):
-    """Transform price strings to correct format"""
-    text_w_cents = r'Ahora: (\d+) reales con (\d+) centavos'  
-    text_no_cents = r'Ahora: (\d+) reales'  
-    
-    has_cents = re.search(text_w_cents, text)
-    no_cents = re.search(text_no_cents, text)
-    
-    if has_cents:
-        reais = has_cents.group(1)
-        centavos = has_cents.group(2)
-        return f'R${reais},{centavos.zfill(2)}'
-    elif no_cents:
-        reais = no_cents.group(1)
-        return f'R${reais},00'
-    else:
-        return None
-###
-
 def get_timestamp(df, column):
     timestamp = datetime.now()
     df[column] = timestamp
@@ -107,11 +88,6 @@ def scrap_all_pages(base_url, max_pages, column_names):
     promotion_products = pd.DataFrame(all_products, columns=column_names)
     promotion_products_final = get_timestamp(promotion_products, 'included_in')
     return promotion_products_final
-
-def get_timestamp(df, column):
-    timestamp = datetime.now()
-    df[column] = timestamp
-    return df
 
 def dataframe_to_csv(dataframe):
     """Convert dataframe to csv and export do Downloads folder"""
