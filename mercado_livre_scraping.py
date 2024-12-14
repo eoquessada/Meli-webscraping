@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import re
 from pathlib import Path
+from datetime import datetime
 
 def get_response_text(url):
     """Fetch the content of the given URL and return the response text."""
@@ -24,28 +25,43 @@ def beautify_text(response_text):
 def get_items_title(soup):
     """Extract and return the titles of promotion items from the BeautifulSoup object."""
     if soup:
-        html_tags = soup.find_all('p', class_='promotion-item__title')
+        html_tags = soup.find_all('a', class_='poly-component__title')
         return [tag.get_text(strip=True) for tag in html_tags]
     else:
         return []
+
 
 def get_items_prices(soup):
-    """Extract and return the prices of promotion items from the BeautifulSoup object."""
+    """Extract and return the current prices of promotion items from the BeautifulSoup object."""
     if soup:
-        html_tags = soup.find_all('span', class_='andes-money-amount andes-money-amount--cents-superscript')
-        return [tag['aria-label'] for tag in html_tags]
+        prices = []
+        # Encontre todas as divs com o preço atual
+        current_price_divs = soup.find_all('div', class_='poly-price__current')
+        for div in current_price_divs:
+            # Dentro de cada div, pegue os reais e centavos
+            reais = div.find('span', class_='andes-money-amount__fraction')
+            centavos = div.find('span', class_='andes-money-amount__cents')
+            # Combine reais e centavos (ou "00" se centavos não existirem)
+            reais_text = reais.get_text(strip=True) if reais else "0"
+            centavos_text = centavos.get_text(strip=True) if centavos else "00"
+            prices.append(f"R$ {reais_text},{centavos_text}")
+        return prices
     else:
         return []
 
+
+
+
 def get_items_discounts(soup):
-    """"Extract and return the discount of promotion items from the BeatifulSoup object."""
+    """Extract and return the discount of promotion items from the BeautifulSoup object."""
     if soup:
-        html_tags = soup.find_all('span', class_ = 'promotion-item__discount-text')
+        html_tags = soup.find_all('span', class_='andes-money-amount__discount')
         return [tag.get_text(strip=True) for tag in html_tags]
     else:
         return []
 
-def transform_price(text):
+
+###def transform_price(text):
     """Transform price strings to correct format"""
     text_w_cents = r'Ahora: (\d+) reales con (\d+) centavos'  
     text_no_cents = r'Ahora: (\d+) reales'  
@@ -62,6 +78,12 @@ def transform_price(text):
         return f'R${reais},00'
     else:
         return None
+###
+
+def get_timestamp(df, column):
+    timestamp = datetime.now()
+    df[column] = timestamp
+    return df
 
 def scrap_all_pages(base_url, max_pages, column_names):
     """Scrap all pages from offer products"""
@@ -81,10 +103,15 @@ def scrap_all_pages(base_url, max_pages, column_names):
             all_products_discounts.extend(discounts)
         else:
             break  
-    for i in range(len(all_products_prices)):
-        all_products_prices[i] = transform_price(all_products_prices[i])
     all_products = zip(all_products_titles, all_products_prices, all_products_discounts)
-    return pd.DataFrame(all_products, columns=column_names)
+    promotion_products = pd.DataFrame(all_products, columns=column_names)
+    promotion_products_final = get_timestamp(promotion_products, 'included_in')
+    return promotion_products_final
+
+def get_timestamp(df, column):
+    timestamp = datetime.now()
+    df[column] = timestamp
+    return df
 
 def dataframe_to_csv(dataframe):
     """Convert dataframe to csv and export do Downloads folder"""
